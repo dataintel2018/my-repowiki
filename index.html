@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RepoWiki</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0d1117; --bg2: #161b22; --bg3: #21262d;
+      --border: #30363d; --border2: #484f58;
+      --text: #e6edf3; --text2: #8b949e; --text3: #6e7681;
+      --accent: #2f81f7; --accent-dim: #1c2d4a;
+      --green: #3fb950; --green-dim: #12261e;
+      --amber: #d29922; --amber-dim: #2d2100;
+      --red: #f85149; --red-dim: #2c0b0e;
+      --purple: #a371f7; --purple-dim: #1e1630;
+      --r: 8px; --rl: 12px;
+      --sans: 'IBM Plex Sans', system-ui, sans-serif;
+      --mono: 'IBM Plex Mono', monospace;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 15px; line-height: 1.6; min-height: 100vh; }
+
+    /* HEADER */
+    header { border-bottom: 1px solid var(--border); padding: 0 2rem; height: 56px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: rgba(13,17,23,.92); backdrop-filter: blur(8px); z-index: 100; }
+    .logo { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 15px; color: var(--text); text-decoration: none; }
+    .logo-icon { width: 28px; height: 28px; background: linear-gradient(135deg,var(--accent),var(--purple)); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 15px; }
+    .hdr-right { display: flex; align-items: center; gap: 10px; }
+    .hdr-btn { font-size: 12px; color: var(--text2); text-decoration: none; border: 1px solid var(--border); border-radius: var(--r); padding: 5px 12px; transition: .15s; cursor: pointer; background: none; font-family: var(--sans); }
+    .hdr-btn:hover { border-color: var(--border2); color: var(--text); }
+
+    /* LAYOUT */
+    .container { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+    /* HERO */
+    .hero { padding: 3.5rem 0 2.5rem; max-width: 640px; }
+    .hero h1 { font-size: 36px; font-weight: 600; line-height: 1.2; letter-spacing: -.5px; margin-bottom: 12px; }
+    .hero h1 em { color: var(--accent); font-style: normal; }
+    .hero p { color: var(--text2); font-size: 16px; margin-bottom: 2rem; }
+
+    /* SEARCH */
+    .search-box { display: flex; gap: 0; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--rl); overflow: hidden; max-width: 600px; transition: border-color .15s; }
+    .search-box:focus-within { border-color: var(--accent); }
+    .search-box input { flex: 1; background: transparent; border: none; outline: none; color: var(--text); font-family: var(--mono); font-size: 14px; padding: 12px 16px; min-width: 0; }
+    .search-box input::placeholder { color: var(--text3); }
+    .search-box .divider { width: 1px; background: var(--border); margin: 10px 0; flex-shrink: 0; }
+    #token-input { max-width: 190px; }
+    .search-btn { background: var(--accent); color: #fff; border: none; padding: 0 20px; font-size: 14px; font-weight: 500; cursor: pointer; font-family: var(--sans); white-space: nowrap; transition: opacity .15s; }
+    .search-btn:hover { opacity: .85; }
+    .search-btn:disabled { opacity: .45; cursor: not-allowed; }
+    .hint { font-size: 12px; color: var(--text3); margin-top: 10px; }
+    .hint a { color: var(--accent); text-decoration: none; }
+
+    /* ERROR */
+    .err { background: var(--red-dim); border: 1px solid var(--red); color: var(--red); border-radius: var(--r); padding: 10px 14px; font-size: 13px; margin-bottom: 1.5rem; display: none; }
+
+    /* GRID HEADER */
+    .grid-header { display: flex; align-items: center; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--border); margin-bottom: 1rem; flex-wrap: wrap; }
+    .owner-avatar { width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--border2); }
+    .owner-name { font-weight: 600; }
+    .pill { font-size: 12px; background: var(--bg2); border: 1px solid var(--border); border-radius: 99px; padding: 3px 10px; color: var(--text2); }
+    .grid-controls { margin-left: auto; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .ctrl-input { background: var(--bg2); border: 1px solid var(--border); color: var(--text); border-radius: var(--r); padding: 5px 10px; font-size: 12px; font-family: var(--mono); outline: none; width: 150px; }
+    .ctrl-input::placeholder { color: var(--text3); }
+    .ctrl-select { background: var(--bg2); border: 1px solid var(--border); color: var(--text2); border-radius: var(--r); padding: 5px 10px; font-size: 12px; font-family: var(--sans); cursor: pointer; outline: none; }
+
+    /* REPO GRID */
+    .repo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px,1fr)); gap: 12px; }
+    .repo-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--rl); padding: 1.1rem 1.25rem; cursor: pointer; transition: border-color .15s, transform .1s; display: flex; flex-direction: column; gap: 10px; }
+    .repo-card:hover { border-color: var(--accent); transform: translateY(-1px); }
+    .rc-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+    .rc-name { font-weight: 600; font-size: 14px; color: var(--accent); word-break: break-word; }
+    .rc-vis { font-size: 11px; color: var(--text3); border: 1px solid var(--border); border-radius: 99px; padding: 1px 7px; white-space: nowrap; }
+    .rc-desc { font-size: 13px; color: var(--text2); line-height: 1.55; flex: 1; min-height: 38px; }
+    .rc-meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .lang-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+    .rc-lang { font-size: 12px; color: var(--text2); display: flex; align-items: center; gap: 5px; }
+    .rc-stat { font-size: 12px; color: var(--text2); }
+    .rc-footer { font-size: 11px; color: var(--text3); border-top: 1px solid var(--border); padding-top: 8px; }
+    .topic { font-size: 11px; color: #58a6ff; background: var(--accent-dim); border-radius: 99px; padding: 2px 8px; }
+
+    /* DETAIL */
+    .detail-wrap { display: none; }
+    .breadcrumb { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text2); margin-bottom: 1.5rem; }
+    .breadcrumb a { color: var(--accent); text-decoration: none; cursor: pointer; }
+    .breadcrumb a:hover { text-decoration: underline; }
+
+    .detail-hdr { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--rl); padding: 1.5rem; margin-bottom: 1rem; }
+    .dh-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+    .dh-title { font-size: 22px; font-weight: 600; }
+    .dh-title .owner { color: var(--text2); font-weight: 400; }
+    .gh-btn { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text2); text-decoration: none; border: 1px solid var(--border); border-radius: var(--r); padding: 6px 14px; transition: .15s; white-space: nowrap; }
+    .gh-btn:hover { border-color: var(--border2); color: var(--text); }
+    .dh-desc { font-size: 14px; color: var(--text2); margin: 8px 0 14px; }
+    .dh-meta { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .badge { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; border-radius: 99px; padding: 3px 10px; }
+    .b-lang { background: var(--bg3); color: var(--text2); border: 1px solid var(--border); }
+    .b-star { background: var(--amber-dim); color: var(--amber); }
+    .b-fork { background: var(--accent-dim); color: #58a6ff; }
+    .b-pub  { background: var(--green-dim); color: var(--green); }
+    .b-priv { background: var(--red-dim); color: var(--red); }
+    .b-lic  { background: var(--bg3); color: var(--text3); border: 1px solid var(--border); }
+    .stat-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-top: 1.25rem; }
+    .stat-box { background: var(--bg3); border-radius: var(--r); padding: .85rem; text-align: center; }
+    .stat-box .n { font-size: 22px; font-weight: 600; }
+    .stat-box .l { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+    /* TABS */
+    .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 1rem; }
+    .tab { font-size: 14px; padding: 10px 18px; cursor: pointer; color: var(--text2); border-bottom: 2px solid transparent; margin-bottom: -1px; transition: color .15s; user-select: none; }
+    .tab:hover { color: var(--text); }
+    .tab.active { color: var(--text); border-bottom-color: var(--accent); font-weight: 500; }
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+
+    /* AI CARD */
+    .ai-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--rl); padding: 1.25rem; }
+    .ai-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--purple); background: var(--purple-dim); border-radius: 99px; padding: 3px 10px; margin-bottom: 14px; }
+    .pulse { width: 6px; height: 6px; border-radius: 50%; background: var(--purple); animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.3} }
+    .ai-text { font-size: 14px; line-height: 1.8; color: var(--text2); white-space: pre-wrap; }
+    .ai-text.muted { color: var(--text3); font-style: italic; }
+
+    /* README */
+    .readme-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--rl); padding: 1.25rem; font-family: var(--mono); font-size: 13px; line-height: 1.75; color: var(--text2); white-space: pre-wrap; word-break: break-word; max-height: 600px; overflow-y: auto; }
+
+    /* FILES */
+    .files-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--rl); overflow: hidden; }
+    .file-row { display: flex; align-items: center; gap: 12px; padding: 9px 16px; border-bottom: 1px solid var(--border); font-size: 13px; }
+    .file-row:last-child { border-bottom: none; }
+    .file-row:hover { background: var(--bg3); }
+    .fi { color: var(--text3); width: 16px; flex-shrink: 0; font-size: 14px; }
+    .fn { color: var(--accent); font-family: var(--mono); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .fn.dir { color: var(--text); }
+    .fm { color: var(--text2); flex: 2; font-size: 12px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .fs { color: var(--text3); font-size: 12px; font-family: var(--mono); }
+
+    /* EMPTY */
+    .empty { text-align: center; padding: 4rem 1rem; color: var(--text3); }
+    .empty .big { font-size: 48px; margin-bottom: 14px; }
+
+    @media(max-width:600px) {
+      .stat-grid { grid-template-columns: repeat(2,1fr); }
+      .search-box { flex-direction: column; border-radius: var(--r); }
+      .search-box .divider { width: auto; height: 1px; margin: 0 12px; }
+      #token-input { max-width: 100%; }
+      .search-btn { padding: 12px; border-radius: 0 0 var(--r) var(--r); }
+      .grid-controls { margin-left: 0; width: 100%; }
+    }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="index.html">
+    <div class="logo-icon">⚡</div>
+    RepoWiki
+  </a>
+  <div class="hdr-right">
+    <a class="hdr-btn" id="hdr-gh-link" href="https://github.com" target="_blank">GitHub ↗</a>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- HERO / SEARCH -->
+  <div id="hero-section" class="hero">
+    <h1>Your repos,<br><em>AI-understood</em></h1>
+    <p>Enter any GitHub username to generate an intelligent wiki — AI summaries, README viewer, file explorer, and repo stats.</p>
+    <div class="search-box">
+      <input type="text" id="username-input" placeholder="github-username" autocomplete="off" />
+      <div class="divider"></div>
+      <input type="text" id="token-input" placeholder="ghp_token (optional)" autocomplete="off" />
+      <button class="search-btn" id="fetch-btn" onclick="fetchRepos()">Generate →</button>
+    </div>
+    <p class="hint">Token needed for private repos &amp; higher rate limits. <a href="https://github.com/settings/tokens/new?scopes=repo&description=RepoWiki" target="_blank">Create one here ↗</a></p>
+  </div>
+
+  <div class="err" id="err-bar"></div>
+
+  <!-- GRID VIEW -->
+  <div id="grid-view" style="display:none">
+    <div class="grid-header" id="grid-header"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center;">
+      <input class="ctrl-input" type="text" id="search-inline" placeholder="Filter repos…" oninput="renderGrid()" />
+      <select class="ctrl-select" id="lang-filter" onchange="renderGrid()"><option value="">All languages</option></select>
+      <select class="ctrl-select" id="sort-filter" onchange="renderGrid()">
+        <option value="updated">Recently updated</option>
+        <option value="stars">Most stars</option>
+        <option value="forks">Most forks</option>
+        <option value="name">Name A–Z</option>
+      </select>
+      <span id="repo-count" style="font-size:12px;color:var(--text3);margin-left:auto;"></span>
+    </div>
+    <div class="repo-grid" id="repo-grid"></div>
+    <div class="empty" id="no-results" style="display:none"><div class="big">🔍</div>No repos match your filter.</div>
+  </div>
+
+  <!-- DETAIL VIEW -->
+  <div class="detail-wrap" id="detail-view">
+    <div class="breadcrumb">
+      <a onclick="showGrid()">← All repos</a>
+      <span style="color:var(--text3)">/</span>
+      <span id="bc-repo"></span>
+    </div>
+    <div class="detail-hdr" id="detail-hdr"></div>
+    <div class="tabs" id="detail-tabs">
+      <div class="tab active" onclick="switchTab('ai',this)">AI overview</div>
+      <div class="tab" onclick="switchTab('readme',this)">README</div>
+      <div class="tab" onclick="switchTab('files',this)">Files</div>
+    </div>
+    <div class="tab-pane active" id="tab-ai"></div>
+    <div class="tab-pane" id="tab-readme"></div>
+    <div class="tab-pane" id="tab-files"></div>
+  </div>
+
+</div>
+
+<script>
+const LANG_COLORS = {
+  JavaScript:'#f1e05a',TypeScript:'#3178c6',Python:'#3572A5',Rust:'#dea584',
+  Go:'#00ADD8',Java:'#b07219','C++':'#f34b7d','C#':'#178600',Ruby:'#701516',
+  PHP:'#4F5D95',Swift:'#F05138',Kotlin:'#A97BFF',Shell:'#89e051',
+  HTML:'#e34c26',CSS:'#563d7c',Vue:'#41b883',Svelte:'#ff3e00',
+  Dart:'#00B4AB','Jupyter Notebook':'#DA5B0B',R:'#198CE7',Scala:'#c22d40',
+  C:'#555555',Lua:'#000080',Haskell:'#5e5086',Elixir:'#6e4a7e',
+};
+
+let allRepos = [], currentRepo = null;
+let readmeCache = {}, aiCache = {}, filesCache = {};
+
+function token() { return document.getElementById('token-input').value.trim(); }
+function username() { return document.getElementById('username-input').value.trim(); }
+function authHeaders() {
+  const h = { Accept: 'application/vnd.github.v3+json' };
+  if (token()) h.Authorization = `token ${token()}`;
+  return h;
+}
+
+async function fetchRepos() {
+  const u = username();
+  if (!u) { showErr('Please enter a GitHub username.'); return; }
+  clearErr();
+  const btn = document.getElementById('fetch-btn');
+  btn.textContent = 'Loading…'; btn.disabled = true;
+  try {
+    let page = 1, repos = [];
+    while (true) {
+      const res = await fetch(`https://api.github.com/users/${u}/repos?per_page=100&page=${page}&sort=updated`, { headers: authHeaders() });
+      if (!res.ok) {
+        if (res.status === 403) throw new Error('Rate limited by GitHub. Add a personal access token to continue.');
+        if (res.status === 404) throw new Error(`User "${u}" not found on GitHub.`);
+        throw new Error(`GitHub API error ${res.status}`);
+      }
+      const batch = await res.json();
+      repos = repos.concat(batch);
+      if (batch.length < 100) break;
+      page++;
+    }
+    allRepos = repos;
+    document.getElementById('hdr-gh-link').href = `https://github.com/${u}`;
+    document.getElementById('hero-section').style.paddingBottom = '1rem';
+    populateLangFilter();
+    renderGridHeader();
+    renderGrid();
+    document.getElementById('grid-view').style.display = 'block';
+    document.getElementById('detail-view').style.display = 'none';
+    document.getElementById('detail-view').classList.remove('detail-wrap');
+  } catch(e) { showErr(e.message); }
+  finally { btn.textContent = 'Generate →'; btn.disabled = false; }
+}
+
+function populateLangFilter() {
+  const langs = [...new Set(allRepos.map(r=>r.language).filter(Boolean))].sort();
+  const sel = document.getElementById('lang-filter');
+  sel.innerHTML = '<option value="">All languages</option>';
+  langs.forEach(l => { const o = document.createElement('option'); o.value = o.textContent = l; sel.appendChild(o); });
+}
+
+function renderGridHeader() {
+  const u = username();
+  const total = allRepos.length;
+  const stars = allRepos.reduce((s,r)=>s+r.stargazers_count,0);
+  document.getElementById('grid-header').innerHTML = `
+    <img class="owner-avatar" src="https://github.com/${u}.png?size=60" onerror="this.style.display='none'" />
+    <span class="owner-name">${u}</span>
+    <span class="pill">${total} repos</span>
+    <span class="pill">★ ${stars} total stars</span>
+  `;
+}
+
+function renderGrid() {
+  const lang = document.getElementById('lang-filter').value;
+  const sort = document.getElementById('sort-filter').value;
+  const q = document.getElementById('search-inline').value.toLowerCase();
+  let repos = allRepos.filter(r =>
+    (!lang || r.language === lang) &&
+    (!q || r.name.toLowerCase().includes(q) || (r.description||'').toLowerCase().includes(q) || (r.topics||[]).some(t=>t.includes(q)))
+  );
+  if (sort==='stars') repos.sort((a,b)=>b.stargazers_count-a.stargazers_count);
+  else if (sort==='forks') repos.sort((a,b)=>b.forks_count-a.forks_count);
+  else if (sort==='name') repos.sort((a,b)=>a.name.localeCompare(b.name));
+  else repos.sort((a,b)=>new Date(b.updated_at)-new Date(a.updated_at));
+
+  document.getElementById('repo-count').textContent = `${repos.length} repo${repos.length!==1?'s':''}`;
+  const grid = document.getElementById('repo-grid');
+  grid.innerHTML = '';
+  document.getElementById('no-results').style.display = repos.length ? 'none' : 'block';
+
+  repos.forEach(repo => {
+    const updated = new Date(repo.updated_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+    const dot = repo.language && LANG_COLORS[repo.language] ? `<span class="lang-dot" style="background:${LANG_COLORS[repo.language]}"></span>` : '';
+    const topics = (repo.topics||[]).slice(0,3).map(t=>`<span class="topic">${t}</span>`).join('');
+    const card = document.createElement('div');
+    card.className = 'repo-card';
+    card.onclick = () => openRepo(repo);
+    card.innerHTML = `
+      <div class="rc-top">
+        <div class="rc-name">${repo.name}</div>
+        <span class="rc-vis">${repo.private?'private':'public'}</span>
+      </div>
+      <div class="rc-desc">${repo.description || '<span style="color:var(--text3);font-style:italic">No description</span>'}</div>
+      ${topics ? `<div style="display:flex;gap:5px;flex-wrap:wrap">${topics}</div>` : ''}
+      <div class="rc-meta">
+        ${repo.language ? `<span class="rc-lang">${dot}${repo.language}</span>` : ''}
+        ${repo.stargazers_count ? `<span class="rc-stat">★ ${repo.stargazers_count}</span>` : ''}
+        ${repo.forks_count ? `<span class="rc-stat">⑂ ${repo.forks_count}</span>` : ''}
+      </div>
+      <div class="rc-footer">Updated ${updated}</div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+async function openRepo(repo) {
+  currentRepo = repo;
+  document.getElementById('grid-view').style.display = 'none';
+  const dv = document.getElementById('detail-view');
+  dv.style.display = 'block'; dv.classList.remove('detail-wrap');
+  document.getElementById('bc-repo').textContent = repo.name;
+  renderDetailHeader(repo);
+  switchTab('ai', document.querySelector('.tab'));
+  loadAI(repo);
+  loadReadme(repo);
+  loadFiles(repo);
+  window.scrollTo(0,0);
+}
+
+function showGrid() {
+  document.getElementById('grid-view').style.display = 'block';
+  document.getElementById('detail-view').style.display = 'none';
+  window.scrollTo(0,0);
+}
+
+function renderDetailHeader(repo) {
+  const updated = new Date(repo.updated_at).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+  const created = new Date(repo.created_at).toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  const dot = repo.language && LANG_COLORS[repo.language] ? `<span class="lang-dot" style="background:${LANG_COLORS[repo.language]}"></span>` : '';
+  document.getElementById('detail-hdr').innerHTML = `
+    <div class="dh-top">
+      <h1 class="dh-title"><span class="owner">${username()} / </span>${repo.name}</h1>
+      <a class="gh-btn" href="${repo.html_url}" target="_blank">View on GitHub ↗</a>
+    </div>
+    <p class="dh-desc">${repo.description || 'No description provided.'}</p>
+    <div class="dh-meta">
+      ${repo.language ? `<span class="badge b-lang">${dot} ${repo.language}</span>` : ''}
+      ${repo.stargazers_count ? `<span class="badge b-star">★ ${repo.stargazers_count}</span>` : ''}
+      ${repo.forks_count ? `<span class="badge b-fork">⑂ ${repo.forks_count}</span>` : ''}
+      <span class="badge ${repo.private?'b-priv':'b-pub'}">${repo.private?'private':'public'}</span>
+      ${repo.license ? `<span class="badge b-lic">${repo.license.spdx_id}</span>` : ''}
+      ${(repo.topics||[]).map(t=>`<span class="badge" style="background:var(--accent-dim);color:#58a6ff">${t}</span>`).join('')}
+    </div>
+    <div class="stat-grid">
+      <div class="stat-box"><div class="n">${repo.stargazers_count}</div><div class="l">Stars</div></div>
+      <div class="stat-box"><div class="n">${repo.forks_count}</div><div class="l">Forks</div></div>
+      <div class="stat-box"><div class="n">${repo.open_issues_count}</div><div class="l">Open issues</div></div>
+      <div class="stat-box"><div class="n">${repo.watchers_count}</div><div class="l">Watchers</div></div>
+    </div>
+    <p style="font-size:12px;color:var(--text3);margin-top:1rem">Created ${created} · Last updated ${updated}${repo.homepage?` · <a href="${repo.homepage}" target="_blank" style="color:var(--accent)">${repo.homepage}</a>`:''}</p>
+  `;
+}
+
+function switchTab(name, el) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  if (el) el.classList.add('active');
+  else {
+    const tabs = document.querySelectorAll('.tab');
+    if (name==='ai') tabs[0].classList.add('active');
+    else if (name==='readme') tabs[1].classList.add('active');
+    else tabs[2].classList.add('active');
+  }
+  document.getElementById('tab-'+name).classList.add('active');
+}
+
+async function loadAI(repo) {
+  const pane = document.getElementById('tab-ai');
+  if (aiCache[repo.full_name]) {
+    pane.innerHTML = aiBlock(aiCache[repo.full_name], false);
+    return;
+  }
+  pane.innerHTML = aiBlock('Generating AI wiki summary…', true);
+  // wait a beat for readme to start loading
+  await delay(800);
+  const readme = readmeCache[repo.full_name] || '';
+  const prompt = `You are a developer wiki generator. Write a thorough, useful wiki page for this GitHub repository. Structure your response as 3-4 solid paragraphs covering:
+1. What this project does and why it exists
+2. Architecture, tech stack, and key design decisions
+3. How to get started / use it
+4. Notable features, current status, or things worth knowing
+
+Repository: ${repo.full_name}
+Description: ${repo.description || 'None'}
+Language: ${repo.language || 'Unknown'}
+Stars: ${repo.stargazers_count} | Forks: ${repo.forks_count} | Open issues: ${repo.open_issues_count}
+Topics: ${(repo.topics||[]).join(', ') || 'None'}
+License: ${repo.license?.name || 'None'}
+Homepage: ${repo.homepage || 'None'}
+README excerpt (first 2000 chars):
+${(readme||'Not available').substring(0,2000)}
+
+Write in a direct, informative, developer-friendly tone. No fluff, no bullet points — just clear prose paragraphs.`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await res.json();
+    const text = data.content?.find(b=>b.type==='text')?.text || 'Could not generate summary.';
+    aiCache[repo.full_name] = text;
+    if (currentRepo?.full_name === repo.full_name) {
+      pane.innerHTML = aiBlock(text, false);
+    }
+  } catch(e) {
+    if (currentRepo?.full_name === repo.full_name) {
+      pane.innerHTML = aiBlock('AI summary unavailable — Anthropic API could not be reached.', false);
+    }
+  }
+}
+
+function aiBlock(text, loading) {
+  return `<div class="ai-card">
+    <div class="ai-badge"><span class="pulse"></span>${loading?'Generating AI summary…':'AI-generated wiki'}</div>
+    <div class="ai-text${loading?' muted':''}">${escHtml(text)}</div>
+  </div>`;
+}
+
+async function loadReadme(repo) {
+  if (readmeCache[repo.full_name] !== undefined) {
+    renderReadme(repo);
+    return;
+  }
+  document.getElementById('tab-readme').innerHTML = `<div class="readme-card" style="color:var(--text3);font-style:italic">Loading README…</div>`;
+  try {
+    const res = await fetch(`https://api.github.com/repos/${repo.full_name}/readme`, { headers: authHeaders() });
+    if (!res.ok) { readmeCache[repo.full_name] = null; }
+    else {
+      const data = await res.json();
+      readmeCache[repo.full_name] = atob(data.content.replace(/\n/g,'')).substring(0,8000);
+    }
+  } catch { readmeCache[repo.full_name] = null; }
+  if (currentRepo?.full_name === repo.full_name) renderReadme(repo);
+}
+
+function renderReadme(repo) {
+  const pane = document.getElementById('tab-readme');
+  const txt = readmeCache[repo.full_name];
+  pane.innerHTML = txt
+    ? `<div class="readme-card">${escHtml(txt)}</div>`
+    : `<div class="readme-card" style="color:var(--text3);font-style:italic">No README found for this repository.</div>`;
+}
+
+async function loadFiles(repo) {
+  if (filesCache[repo.full_name]) { renderFiles(repo); return; }
+  document.getElementById('tab-files').innerHTML = `<div class="files-card"><div class="file-row" style="color:var(--text3);font-style:italic">Loading files…</div></div>`;
+  try {
+    const res = await fetch(`https://api.github.com/repos/${repo.full_name}/contents/`, { headers: authHeaders() });
+    if (!res.ok) throw new Error();
+    filesCache[repo.full_name] = await res.json();
+  } catch { filesCache[repo.full_name] = []; }
+  if (currentRepo?.full_name === repo.full_name) renderFiles(repo);
+}
+
+function renderFiles(repo) {
+  const pane = document.getElementById('tab-files');
+  const files = filesCache[repo.full_name] || [];
+  if (!files.length) { pane.innerHTML = `<div class="files-card"><div class="file-row" style="color:var(--text3)">No files found.</div></div>`; return; }
+  const sorted = [...files].sort((a,b)=>{
+    if (a.type===b.type) return a.name.localeCompare(b.name);
+    return a.type==='dir' ? -1 : 1;
+  });
+  const rows = sorted.map(f => {
+    const icon = f.type==='dir' ? '📁' : '📄';
+    const size = f.size ? formatSize(f.size) : '';
+    return `<div class="file-row">
+      <span class="fi">${icon}</span>
+      <span class="fn${f.type==='dir'?' dir':''}">${escHtml(f.name)}</span>
+      <span class="fs">${size}</span>
+    </div>`;
+  }).join('');
+  pane.innerHTML = `<div class="files-card">${rows}</div>`;
+}
+
+function formatSize(bytes) {
+  if (bytes < 1024) return bytes+'B';
+  if (bytes < 1024*1024) return (bytes/1024).toFixed(1)+'KB';
+  return (bytes/1024/1024).toFixed(1)+'MB';
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function delay(ms) { return new Promise(r=>setTimeout(r,ms)); }
+function showErr(msg) { const e=document.getElementById('err-bar'); e.textContent=msg; e.style.display='block'; }
+function clearErr() { document.getElementById('err-bar').style.display='none'; }
+
+document.getElementById('username-input').addEventListener('keydown', e => { if(e.key==='Enter') fetchRepos(); });
+</script>
+</body>
+</html>
