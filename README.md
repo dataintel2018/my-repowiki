@@ -2,7 +2,7 @@
 
 > An AI-powered GitHub Pages wiki for all your repositories — like DeepWiki, but yours.
 
-**Live demo:** `https://dataintel2018.github.io/repowiki`
+**Live demo:** [demo](https://dataintel2018.github.io/repowiki)
 
 ## What it does
 
